@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catkut 🐾</title>
+<style>
+:root{
+  --rosa:#f48fb1;
+  --rosa2:#f06292;
+  --bg:#fff0f5;
+  --card:#ffffffdd;
+  --dark-bg:#1e1e1e;
+  --dark-card:#2a2a2add;
+  --dark-text:#fff;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family:"Segoe UI",sans-serif;
+  background:var(--bg);
+  transition:0.3s;
+}
+.dark body{background:var(--dark-bg);color:var(--dark-text);}
+.hidden{display:none;}
+.center{display:flex;justify-content:center;align-items:center;min-height:100vh;}
+.card{background:var(--card);padding:25px;border-radius:18px;box-shadow:0 8px 20px rgba(0,0,0,.1);width:320px;animation:fade .5s;}
+.dark .card{background:var(--dark-card);}
+@keyframes fade{from{opacity:0;transform:translateY(20px);}to{opacity:1;}}
+input,button,textarea,select{
+  width:100%;padding:10px;margin:8px 0;border-radius:10px;border:1px solid #ccc;font-size:15px;
+}
+.dark input,.dark textarea,.dark select{border:1px solid #555;background:#333;color:#fff;}
+button{background:var(--rosa);color:white;border:none;cursor:pointer;font-weight:bold;transition:background .3s;}
+button:hover{background:var(--rosa2);}
+header{background:var(--rosa);color:#fff;padding:15px;text-align:center;font-size:26px;position:sticky;top:0;}
+header span{font-weight:bold;}
+nav{background:#fff;display:flex;justify-content:center;gap:20px;padding:10px;flex-wrap:wrap;}
+.dark nav{background:#222;}
+nav a{text-decoration:none;color:var(--rosa2);font-weight:bold;}
+main{max-width:900px;margin:20px auto;padding:0 15px;}
+.perfil{background:var(--card);border-radius:18px;padding:20px;display:flex;gap:20px;align-items:center;flex-wrap:wrap;box-shadow:0 4px 12px rgba(0,0,0,.1);}
+.dark .perfil{background:var(--dark-card);}
+.perfil img{width:130px;height:130px;border-radius:50%;object-fit:cover;border:4px solid var(--rosa);}
+textarea{border:2px solid var(--rosa);resize:none;}
+.scrap{background:var(--card);padding:10px;margin:10px 0;border-left:6px solid var(--rosa);border-radius:12px;box-shadow:0 0 6px rgba(0,0,0,.1);}
+.dark .scrap{background:#333;border-left:6px solid var(--rosa);}
+.comunidade{display:inline-block;background:var(--rosa);color:#fff;padding:8px 14px;border-radius:20px;margin:5px;box-shadow:0 0 5px rgba(0,0,0,.15);}
+.scrap-buttons{display:flex;gap:10px;margin-top:5px;font-size:14px;}
+.scrap-buttons button{background:#f06292;padding:5px;border-radius:8px;font-weight:normal;}
+</style>
+</head>
+<body>
+
+<!-- ======= LOGIN/REGISTRO ======= -->
+<div id="auth" class="center">
+  <div class="card">
+    <h2 style="text-align:center">🐾 Catkut</h2>
+    <form id="registerForm">
+      <h4>Criar Conta</h4>
+      <input id="regUser" placeholder="Usuário" required>
+      <input id="regPass" type="password" placeholder="Senha" required>
+      <button type="submit">Registrar</button>
+    </form>
+    <form id="loginForm">
+      <h4>Entrar</h4>
+      <input id="logUser" placeholder="Usuário" required>
+      <input id="logPass" type="password" placeholder="Senha" required>
+      <button type="submit">Login</button>
+    </form>
+  </div>
+</div>
+
+<!-- ======= APP ======= -->
+<div id="app" class="hidden">
+  <header>
+    🐾 Catkut – Rede dos Gatinhos 🐾
+    <br><small>Olá <span id="userDisplay"></span> | <a href="#" id="logout" style="color:#fff;text-decoration:underline;">Sair</a></small>
+    <button id="themeBtn" style="margin-top:5px;">🌙 Dark Mode</button>
+  </header>
+
+  <nav>
+    <a href="#perfil">Meu Gatinho</a>
+    <a href="#scrapbook">Mural</a>
+    <a href="#comunidades">Comunidades</a>
+    <a href="#amigos">Amigos</a>
+  </nav>
+
+  <main>
+    <!-- Perfil -->
+    <section id="perfil" class="perfil">
+      <img id="avatar" src="https://placekitten.com/200/200" alt="foto">
+      <div>
+        <h2 id="userName"></h2>
+        <p id="status">Status: 😸 curtindo catnip!</p>
+        <textarea id="bio" placeholder="Escreva sua bio..."></textarea>
+        <label>Mudar foto: <input type="file" id="imgUpload" accept="image/*"></label>
+      </div>
+    </section>
+
+    <!-- Scrapbook -->
+    <section id="scrapbook">
+      <h3>Mural de Miaus</h3>
+      <form id="scrapForm">
+        <textarea id="scrapText" placeholder="Deixe um miau carinhoso..."></textarea>
+        <button type="submit">Publicar</button>
+      </form>
+      <div id="scraps"></div>
+    </section>
+
+    <!-- Comunidades -->
+    <section id="comunidades">
+      <h3>Comunidades Felinas</h3>
+      <div class="comunidade">Eu ♥ Catnip</div>
+      <div class="comunidade">Dormir 16h por dia</div>
+      <div class="comunidade">Caçadores de Laser</div>
+      <div class="comunidade">Caixa de Papel é Vida</div>
+      <div class="comunidade">Ronrons Profundos</div>
+    </section>
+
+    <!-- Amigos -->
+    <section id="amigos">
+      <h3>Amigos</h3>
+      <ul id="friendList"></ul>
+    </section>
+  </main>
+</div>
+
+<script>
+// ==== AUX ====
+const $ = id=>document.getElementById(id);
+function save(key,obj){localStorage.setItem(key,JSON.stringify(obj));}
+function load(key){return JSON.parse(localStorage.getItem(key)||'null');}
+
+// ==== Usuários Múltiplos ====
+const USERS_KEY = 'catkutUsers';
+let users = load(USERS_KEY) || [];
+let currentUser = null;
+
+// ==== Registro ====
+$('registerForm').onsubmit = e=>{
+  e.preventDefault();
+  const u=regUser.value.trim(), p=regPass.value;
+  if(!u||!p){alert("Preencha todos os campos");return;}
+  if(users.find(x=>x.user===u)){alert("Usuário já existe");return;}
+  users.push({user:u,pass:p,avatar:'',scraps:[],bio:'',friends:[]});
+  save(USERS_KEY,users);
+  alert("Conta criada! Faça login.");
+  e.target.reset();
+};
+
+// ==== Login ====
+$('loginForm').onsubmit = e=>{
+  e.preventDefault();
+  const u=logUser.value, p=logPass.value;
+  const usr = users.find(x=>x.user===u && x.pass===p);
+  if(!usr){alert("Usuário ou senha incorretos");return;}
+  startApp(usr);
+};
+
+// ==== Start App ====
+function startApp(user){
+  currentUser = user;
+  $('auth').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  $('userDisplay').textContent=user.user;
+  $('userName').textContent=user.user;
+  $('bio').value = user.bio || '';
+  if(user.avatar) $('avatar').src=user.avatar;
+  loadScraps();
+  loadFriends();
+}
+
+// ==== Logout ====
+$('logout').onclick = ()=>{
+  currentUser=null;
+  $('app').classList.add('hidden');
+  $('auth').classList.remove('hidden');
+};
+
+// ==== Scraps ====
+function addScrap(text,user=currentUser.user,saveIt=true){
+  const d=document.createElement('div');
+  d.className='scrap';
+  d.innerHTML=`<strong>${user}</strong>: ${text}`;
+  // botões
+  const btns = document.createElement('div'); btns.className='scrap-buttons';
+  const likeBtn = document.createElement('button'); likeBtn.textContent='❤️ 0'; let likes=0;
+  likeBtn.onclick=()=>{likes++; likeBtn.textContent=`❤️ ${likes}`;}
+  btns.appendChild(likeBtn);
+  d.appendChild(btns);
+  $('scraps').prepend(d);
+  if(saveIt){
+    currentUser.scraps.unshift({text,user});
+    updateUser(currentUser);
+  }
+}
+$('scrapForm').onsubmit=e=>{
+  e.preventDefault();
+  const t=scrapText.value.trim();
+  if(t){addScrap(t); e.target.reset();}
+};
+function loadScraps(){
+  $('scraps').innerHTML='';
+  currentUser.scraps.forEach(s=>addScrap(s.text,s.user,false));
+}
+
+// ==== Avatar ====
+$('imgUpload').onchange = e=>{
+  const file=e.target.files[0];
+  if(file){
+    const reader=new FileReader();
+    reader.onload = ()=>{
+      $('avatar').src=reader.result;
+      currentUser.avatar=reader.result;
+      updateUser(currentUser);
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+// ==== Bio ====
+$('bio').onblur = ()=>{
+  currentUser.bio = $('bio').value;
+  updateUser(currentUser);
+};
+
+// ==== Atualiza usuário ====
+function updateUser(user){
+  const idx = users.findIndex(x=>x.user===user.user);
+  if(idx>=0){users[idx]=user; save(USERS_KEY,users);}
+}
+
+// ==== Friends ====
+function loadFriends(){
+  $('friendList').innerHTML='';
+  currentUser.friends.forEach(f=>{
+    const li = document.createElement('li');
+    li.textContent=f;
+    $('friendList').appendChild(li);
+  });
+}
+
+// ==== Dark Mode ====
+$('themeBtn').onclick = ()=>{
+  document.body.classList.toggle('dark');
+};
+
+</script>
+</body>
+</html>

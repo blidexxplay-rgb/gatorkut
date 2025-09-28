@@ -8,26 +8,72 @@
 :root{
   --rosa:#f48fb1;
   --rosa2:#f06292;
-  --bg:#fff0f5;
-  --card:#ffffffdd;
+  --bg:#fff0f5; /* Fundo original do app */
+  --card:#ffffffdd; /* Fundo original do app */
   --dark-bg:#1e1e1e;
   --dark-card:#2a2a2add;
   --dark-text:#fff;
-  --friend-bg:#ffe0b2; /* Cor clara para amigos */
-  --friend-dark-bg:#444; /* Cor escura para amigos */
+  --friend-bg:#ffe0b2;
+  --friend-dark-bg:#444;
+  /* Novas variáveis para o login */
+  --login-bg: #f5f5f5; /* Fundo levemente cinza/branco do login */
+  --login-card-bg: #ffffff; /* Fundo branco puro para o card */
+  --login-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  --login-border: #eee;
 }
 *{box-sizing:border-box;}
 body{margin:0;font-family:"Segoe UI",sans-serif;background:var(--bg);transition:0.3s;color:#333;}
 .dark body{background:var(--dark-bg);color:var(--dark-text);}
 .hidden{display:none;}
-.center{display:flex;justify-content:center;align-items:center;min-height:100vh;}
-.card{background:var(--card);padding:25px;border-radius:18px;box-shadow:0 8px 20px rgba(0,0,0,.1);width:320px;animation:fade .5s;}
-.dark .card{background:var(--dark-card);}
+
+/* ESTILOS DA TELA DE LOGIN (NOVO VISUAL) */
+#auth{
+  background: var(--login-bg); /* Aplica o fundo mais limpo */
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+}
+.auth-card{ /* Usando uma classe diferente para o card de login */
+  background:var(--login-card-bg);
+  padding: 30px 40px; /* Mais espaço interno */
+  border-radius:12px;
+  box-shadow:var(--login-shadow);
+  width:100%;
+  max-width:380px; /* Tornando-o um pouco maior */
+  text-align:center;
+  animation:fade .5s;
+}
+.dark .auth-card{
+  background:var(--dark-card);
+}
+#auth h2{
+  color: var(--rosa2); /* Cor de destaque para o título */
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 30px;
+}
+#auth h4{
+  border-top: 1px solid var(--login-border);
+  padding-top: 15px;
+  margin-top: 25px;
+  color: #555;
+  font-weight: 500;
+}
+.dark #auth h4{
+  border-top: 1px solid #444;
+  color: var(--dark-text);
+}
+
 @keyframes fade{from{opacity:0;transform:translateY(20px);}to{opacity:1;}}
-input,button,textarea,select{width:100%;padding:10px;margin:8px 0;border-radius:10px;border:1px solid #ccc;font-size:15px;}
+
+/* Estilos de inputs e botões */
+input,button,textarea,select{width:100%;padding:12px;margin:8px 0;border-radius:6px;border:1px solid #ccc;font-size:16px;}
 .dark input,.dark textarea,.dark select{border:1px solid #555;background:#333;color:#fff;}
-button{background:var(--rosa);color:white;border:none;cursor:pointer;font-weight:bold;transition:background .3s;}
+button{background:var(--rosa);color:white;border:none;cursor:pointer;font-weight:bold;transition:background .3s;padding:12px;}
 button:hover{background:var(--rosa2);}
+
+/* ESTILOS RESTANTES DO APP (mantidos) */
 header{background:var(--rosa);color:#fff;padding:15px;text-align:center;font-size:26px;position:sticky;top:0;z-index:10;}
 header small a{color:#fff;text-decoration:underline;}
 header span{font-weight:bold;}
@@ -61,8 +107,8 @@ textarea{border:2px solid var(--rosa);resize:none;}
 </head>
 <body>
 
-<div id="auth" class="center">
-  <div class="card">
+<div id="auth">
+  <div class="auth-card">
     <h2 style="text-align:center">🐾 Catkut</h2>
     <form id="registerForm">
       <h4>Criar Conta</h4>
@@ -323,4 +369,4 @@ $('addFriendForm').onsubmit = e => {
 checkLogin();
 </script>
 </body>
-  </html>
+</html>

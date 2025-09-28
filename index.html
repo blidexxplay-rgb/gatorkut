@@ -13,9 +13,11 @@
   --dark-bg:#1e1e1e;
   --dark-card:#2a2a2add;
   --dark-text:#fff;
+  --friend-bg:#ffe0b2; /* Cor clara para amigos */
+  --friend-dark-bg:#444; /* Cor escura para amigos */
 }
 *{box-sizing:border-box;}
-body{margin:0;font-family:"Segoe UI",sans-serif;background:var(--bg);transition:0.3s;}
+body{margin:0;font-family:"Segoe UI",sans-serif;background:var(--bg);transition:0.3s;color:#333;}
 .dark body{background:var(--dark-bg);color:var(--dark-text);}
 .hidden{display:none;}
 .center{display:flex;justify-content:center;align-items:center;min-height:100vh;}
@@ -26,9 +28,10 @@ input,button,textarea,select{width:100%;padding:10px;margin:8px 0;border-radius:
 .dark input,.dark textarea,.dark select{border:1px solid #555;background:#333;color:#fff;}
 button{background:var(--rosa);color:white;border:none;cursor:pointer;font-weight:bold;transition:background .3s;}
 button:hover{background:var(--rosa2);}
-header{background:var(--rosa);color:#fff;padding:15px;text-align:center;font-size:26px;position:sticky;top:0;}
+header{background:var(--rosa);color:#fff;padding:15px;text-align:center;font-size:26px;position:sticky;top:0;z-index:10;}
+header small a{color:#fff;text-decoration:underline;}
 header span{font-weight:bold;}
-nav{background:#fff;display:flex;justify-content:center;gap:20px;padding:10px;flex-wrap:wrap;}
+nav{background:#fff;display:flex;justify-content:center;gap:20px;padding:10px;flex-wrap:wrap;box-shadow:0 2px 4px rgba(0,0,0,.05);}
 .dark nav{background:#222;}
 nav a{text-decoration:none;color:var(--rosa2);font-weight:bold;}
 main{max-width:900px;margin:20px auto;padding:0 15px;}
@@ -41,11 +44,23 @@ textarea{border:2px solid var(--rosa);resize:none;}
 .comunidade{display:inline-block;background:var(--rosa);color:#fff;padding:8px 14px;border-radius:20px;margin:5px;box-shadow:0 0 5px rgba(0,0,0,.15);}
 .scrap-buttons{display:flex;gap:10px;margin-top:5px;font-size:14px;}
 .scrap-buttons button{background:#f06292;padding:5px;border-radius:8px;font-weight:normal;}
+#friendList{list-style:none;padding:0;}
+#friendList li{
+  padding:8px 12px;
+  background:var(--friend-bg);
+  color:#333;
+  margin:5px 0;
+  border-radius:6px;
+  font-weight:600;
+}
+.dark #friendList li{
+  background:var(--friend-dark-bg);
+  color:var(--dark-text);
+}
 </style>
 </head>
 <body>
 
-<!-- LOGIN/REGISTRO -->
 <div id="auth" class="center">
   <div class="card">
     <h2 style="text-align:center">🐾 Catkut</h2>
@@ -64,11 +79,10 @@ textarea{border:2px solid var(--rosa);resize:none;}
   </div>
 </div>
 
-<!-- APP -->
 <div id="app" class="hidden">
   <header>
     🐾 Catkut – Rede dos Gatinhos 🐾
-    <br><small>Olá <span id="userDisplay"></span> | <a href="#" id="logout" style="color:#fff;text-decoration:underline;">Sair</a></small>
+    <br><small>Olá <span id="userDisplay"></span> | <a href="#" id="logout">Sair</a></small>
     <button id="themeBtn" style="margin-top:5px;">🌙 Dark Mode</button>
   </header>
 
@@ -110,6 +124,10 @@ textarea{border:2px solid var(--rosa);resize:none;}
 
     <section id="amigos">
       <h3>Amigos</h3>
+      <form id="addFriendForm">
+        <input id="friendInput" placeholder="Nome do Gatinho (usuário)" required>
+        <button type="submit">Adicionar Amigo</button>
+      </form>
       <ul id="friendList"></ul>
     </section>
   </main>
@@ -120,10 +138,54 @@ const $ = id=>document.getElementById(id);
 function save(key,obj){localStorage.setItem(key,JSON.stringify(obj));}
 function load(key){return JSON.parse(localStorage.getItem(key)||'null');}
 
-// Usuários múltiplos
+// VARIÁVEIS GLOBAIS
 const USERS_KEY = 'catkutUsers';
 let users = load(USERS_KEY) || [];
 let currentUser = null;
+
+// --- FUNÇÕES DE PERSISTÊNCIA E INICIALIZAÇÃO ---
+
+// Função auxiliar para encontrar e atualizar o usuário no array global e localStorage
+function updateUser(user){
+  const idx = users.findIndex(x=>x.user===user.user);
+  if(idx>=0){users[idx]=user; save(USERS_KEY,users);}
+}
+
+// Salva o nome de usuário do logado para manter a sessão
+function saveCurrentUser(user){
+  localStorage.setItem('currentUser', user.user);
+}
+
+// Carrega o usuário logado da sessão
+function loadCurrentUser(){
+  const username = localStorage.getItem('currentUser');
+  if(!username) return null;
+  return users.find(x=>x.user===username);
+}
+
+// Inicia a aplicação após o login
+function startApp(user){
+  currentUser = user;
+  saveCurrentUser(user);
+  $('auth').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  $('userDisplay').textContent=user.user;
+  $('userName').textContent=user.user;
+  $('bio').value = user.bio || '';
+  if(user.avatar) $('avatar').src=user.avatar;
+  loadScraps();
+  loadFriends();
+}
+
+// Verifica se já existe um usuário logado ao carregar a página
+function checkLogin(){
+  const savedUser = loadCurrentUser();
+  if(savedUser){
+    startApp(savedUser);
+  }
+}
+
+// --- EVENT LISTENERS DE AUTENTICAÇÃO ---
 
 // Registro
 $('registerForm').onsubmit = e=>{
@@ -132,6 +194,7 @@ $('registerForm').onsubmit = e=>{
   const p=$('regPass').value;
   if(!u||!p){alert("Preencha todos os campos");return;}
   if(users.find(x=>x.user===u)){alert("Usuário já existe");return;}
+  // Inicializa o novo usuário com campos vazios/padrão
   users.push({user:u,pass:p,avatar:'',scraps:[],bio:'',friends:[]});
   save(USERS_KEY,users);
   alert("Conta criada! Faça login.");
@@ -148,52 +211,15 @@ $('loginForm').onsubmit = e=>{
   startApp(usr);
 };
 
-// Start App
-function startApp(user){
-  currentUser = user;
-  $('auth').classList.add('hidden');
-  $('app').classList.remove('hidden');
-  $('userDisplay').textContent=user.user;
-  $('userName').textContent=user.user;
-  $('bio').value = user.bio || '';
-  if(user.avatar) $('avatar').src=user.avatar;
-  loadScraps();
-  loadFriends();
-}
-
 // Logout
 $('logout').onclick = ()=>{
   currentUser=null;
+  localStorage.removeItem('currentUser'); // Limpa o login persistente
   $('app').classList.add('hidden');
   $('auth').classList.remove('hidden');
 };
 
-// Scraps
-function addScrap(text,user=currentUser.user,saveIt=true){
-  const d=document.createElement('div');
-  d.className='scrap';
-  d.innerHTML=`<strong>${user}</strong>: ${text}`;
-  const btns = document.createElement('div'); btns.className='scrap-buttons';
-  const likeBtn = document.createElement('button'); let likes=0;
-  likeBtn.textContent='❤️ 0';
-  likeBtn.onclick=()=>{likes++; likeBtn.textContent=`❤️ ${likes}`;}
-  btns.appendChild(likeBtn);
-  d.appendChild(btns);
-  $('scraps').prepend(d);
-  if(saveIt){
-    currentUser.scraps.unshift({text,user});
-    updateUser(currentUser);
-  }
-}
-$('scrapForm').onsubmit=e=>{
-  e.preventDefault();
-  const t=$('scrapText').value.trim();
-  if(t){addScrap(t); e.target.reset();}
-};
-function loadScraps(){
-  $('scraps').innerHTML='';
-  currentUser.scraps.forEach(s=>addScrap(s.text,s.user,false));
-}
+// --- FUNCIONALIDADES DO PERFIL ---
 
 // Avatar
 $('imgUpload').onchange = e=>{
@@ -215,26 +241,86 @@ $('bio').onblur = ()=>{
   updateUser(currentUser);
 };
 
-// Atualiza usuário
-function updateUser(user){
-  const idx = users.findIndex(x=>x.user===user.user);
-  if(idx>=0){users[idx]=user; save(USERS_KEY,users);}
-}
-
-// Friends
-function loadFriends(){
-  $('friendList').innerHTML='';
-  currentUser.friends.forEach(f=>{
-    const li = document.createElement('li');
-    li.textContent=f;
-    $('friendList').appendChild(li);
-  });
-}
-
 // Dark Mode
 $('themeBtn').onclick = ()=>{
   document.body.classList.toggle('dark');
 };
+
+// --- FUNCIONALIDADE SCRAPS ---
+
+// Cria e exibe um scrap
+function addScrap(text,user=currentUser.user,saveIt=true){
+  const d=document.createElement('div');
+  d.className='scrap';
+  d.innerHTML=`<strong>${user}</strong>: ${text}`;
+  const btns = document.createElement('div'); btns.className='scrap-buttons';
+  const likeBtn = document.createElement('button'); let likes=0;
+  likeBtn.textContent='❤️ 0';
+  likeBtn.onclick=()=>{likes++; likeBtn.textContent=`❤️ ${likes}`;}
+  btns.appendChild(likeBtn);
+  d.appendChild(btns);
+  $('scraps').prepend(d); // Adiciona no topo
+  if(saveIt){
+    // Salva o scrap no perfil do usuário atual
+    currentUser.scraps.unshift({text,user});
+    updateUser(currentUser);
+  }
+}
+$('scrapForm').onsubmit=e=>{
+  e.preventDefault();
+  const t=$('scrapText').value.trim();
+  if(t){addScrap(t); e.target.reset();}
+};
+function loadScraps(){
+  $('scraps').innerHTML='';
+  // Carrega os scraps do usuário atual
+  currentUser.scraps.forEach(s=>addScrap(s.text,s.user,false));
+}
+
+// --- FUNCIONALIDADE AMIGOS ---
+
+// Carrega e exibe a lista de amigos
+function loadFriends(){
+  $('friendList').innerHTML='';
+  currentUser.friends.forEach(f=>{
+    const li = document.createElement('li');
+    li.textContent=`🐈 ${f}`;
+    $('friendList').appendChild(li);
+  });
+}
+
+// Adiciona Amigo
+$('addFriendForm').onsubmit = e => {
+  e.preventDefault();
+  const friendName = $('friendInput').value.trim();
+
+  if (!friendName || friendName === currentUser.user) {
+    alert("Não pode adicionar a si mesmo!");
+    return;
+  }
+
+  if (currentUser.friends.includes(friendName)) {
+    alert(`${friendName} já é seu amigo!`);
+    return;
+  }
+
+  // Verifica se o usuário a ser adicionado realmente existe no banco de dados
+  const friendExists = users.some(u => u.user === friendName);
+
+  if (friendExists) {
+    currentUser.friends.push(friendName);
+    updateUser(currentUser);
+    loadFriends();
+    $('friendInput').value = '';
+    alert(`${friendName} adicionado(a) como amigo(a)!`);
+  } else {
+    alert(`Gatinho(a) ${friendName} não encontrado(a) no Catkut.`);
+  }
+};
+
+
+// INICIALIZAÇÃO
+checkLogin();
 </script>
 </body>
-</html>
+  </html>
